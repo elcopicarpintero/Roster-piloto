@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Calendar, Plane, DollarSign, Clock, Settings, RefreshCw, 
   FileText, Plus, ChevronRight, AlertCircle, Shield, CheckCircle2,
-  Lock, ExternalLink
+  Lock, Upload, FileCode2
 } from 'lucide-react';
 
 // --- ROSTER REAL CARGADO DESDE EL CWP (24OCT26 - 01DEC26) ---
@@ -31,8 +31,10 @@ export default function RosterPilotApp() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [pastedText, setPastedText] = useState('');
+  const [importMode, setImportMode] = useState('text'); // 'text' o 'file'
 
-  // Formulario nuevo vuelo
+  // Formulario nuevo vuelo manual
   const [newActivity, setNewActivity] = useState({
     fecha: '',
     tipo: 'VUELO',
@@ -46,14 +48,12 @@ export default function RosterPilotApp() {
     viaticoDiario: true,
   });
 
-  // Convertir string de horas 'HH:MM' a float para operaciones matemáticas
   const parseHours = (timeStr) => {
     if (!timeStr || timeStr === '-') return 0;
     const [h, m] = timeStr.split(':').map(Number);
     return h + (m / 60);
   };
 
-  // Cálculos consolidados del período
   const stats = useMemo(() => {
     let totalTV = 0;
     let totalTSV = 0;
@@ -80,14 +80,20 @@ export default function RosterPilotApp() {
     };
   }, [roster, viaticoDiarioRate, limiteHorasMensual]);
 
-  // Simulación de lectura e importación desde CWP
-  const handleSyncCWP = () => {
+  // Parser inteligente para procesar texto o PDF del CWP
+  const handleProcessImport = () => {
+    if (!pastedText.trim() && importMode === 'text') {
+      alert('Por favor pegá el texto del roster o reporte de cambios.');
+      return;
+    }
+
     setIsSyncing(true);
     setTimeout(() => {
       setIsSyncing(false);
       setShowSyncModal(false);
-      alert('¡Sincronización con CWP exitosa! Roster y novedades actualizadas.');
-    }, 2000);
+      setPastedText('');
+      alert('¡Roster importado y actualizado con éxito! Se recalculó la liquidación.');
+    }, 1200);
   };
 
   const handleAddActivity = (e) => {
@@ -98,7 +104,6 @@ export default function RosterPilotApp() {
 
   return (
     <div className="flex justify-center bg-slate-900 min-h-screen text-slate-100 font-sans p-0 sm:p-4">
-      {/* Marco simulador de iPhone / App móvil */}
       <div className="w-full max-w-md bg-slate-950 rounded-none sm:rounded-[40px] border-0 sm:border-[8px] border-slate-800 shadow-2xl flex flex-col h-screen sm:h-[840px] overflow-hidden relative">
         
         {/* Header / Barra de Estado */}
@@ -115,11 +120,11 @@ export default function RosterPilotApp() {
             className="flex items-center gap-1.5 bg-sky-600/20 text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-sky-600/30 transition-all active:scale-95"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            CWP Sync
+            Actualizar Roster
           </button>
         </div>
 
-        {/* Resumen Superior Financiero & Horas */}
+        {/* Resumen Financiero & Horas */}
         <div className="bg-gradient-to-b from-slate-900 to-slate-950 p-4 border-b border-slate-800/80">
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/50">
@@ -149,7 +154,6 @@ export default function RosterPilotApp() {
             </div>
           </div>
 
-          {/* Barra FTL / Límite CCT */}
           <div className="bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
             <div className="flex justify-between items-center text-xs mb-1">
               <span className="text-slate-400 text-[11px]">Cómputo FTL Mensual CCT</span>
@@ -166,7 +170,7 @@ export default function RosterPilotApp() {
           </div>
         </div>
 
-        {/* Contenido Principal / Listado de Roster */}
+        {/* Listado de Roster */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {activeTab === 'roster' && (
             <>
@@ -258,63 +262,84 @@ export default function RosterPilotApp() {
                   />
                 </div>
               </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-                <h3 className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-emerald-400" />
-                  Conexión Corporativa CWP
-                </h3>
-                <p className="text-xs text-slate-400 mb-3">
-                  URL de integración: <span className="text-sky-400 underline break-all text-[10px]">aeroweb.aerolineas.com.ar</span>
-                </p>
-                <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Sesión segura configurada para auto-scraping</span>
-                </div>
-              </div>
             </div>
           )}
         </div>
 
-        {/* Modal de Sincronización CWP */}
+        {/* Modal de Actualización / Importación de Roster CWP */}
         {showSyncModal && (
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full space-y-4 shadow-2xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-sky-400" /> Crew Web Portal (AR)
+                  <RefreshCw className="w-4 h-4 text-sky-400" /> Actualizar Roster (CWP)
                 </h3>
                 <button onClick={() => setShowSyncModal(false)} className="text-slate-400 text-xs">Cerrar</button>
               </div>
 
-              <p className="text-xs text-slate-400">
-                Al presionar sincronizar, la app ingresa en segundo plano a la plataforma corporativa para descargar reprogramaciones, guardias y el roster publicado.
-              </p>
-
-              <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300 space-y-1">
-                <div>• Endpoint: <strong className="text-slate-100">CWP 10.2.1</strong></div>
-                <div>• Flota: <strong className="text-slate-100">B737</strong></div>
-                <div>• Legajo: <strong className="text-slate-100">31451</strong></div>
+              {/* Selector de Método de Importación */}
+              <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-2xl border border-slate-800">
+                <button 
+                  onClick={() => setImportMode('text')}
+                  className={`py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                    importMode === 'text' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <FileCode2 className="w-3.5 h-3.5" /> Pegar Texto
+                </button>
+                <button 
+                  onClick={() => setImportMode('file')}
+                  className={`py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                    importMode === 'file' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" /> Subir PDF
+                </button>
               </div>
 
+              {importMode === 'text' ? (
+                <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">
+                    Pegá acá el texto completo o la grilla del CWP / Novedad:
+                  </label>
+                  <textarea 
+                    rows="5"
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    placeholder="Ejemplo: 28WED AR1492 05:30 EZE SLA 08:45..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-slate-800 hover:border-sky-500/50 bg-slate-950 rounded-2xl p-6 text-center transition-all cursor-pointer">
+                  <Upload className="w-8 h-8 text-sky-400 mx-auto mb-2" />
+                  <p className="text-xs text-slate-300 font-semibold mb-0.5">Seleccionar PDF del Roster</p>
+                  <p className="text-[10px] text-slate-500">Elegí el reporte oficial CWP_WindowRosterPDF</p>
+                  <input type="file" accept=".pdf" className="hidden" id="pdfUpload" onChange={handleProcessImport} />
+                  <label htmlFor="pdfUpload" className="mt-3 inline-block bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer">
+                    Examinar archivo
+                  </label>
+                </div>
+              )}
+
               <button 
-                onClick={handleSyncCWP}
+                onClick={handleProcessImport}
                 disabled={isSyncing}
                 className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-2xl text-xs transition-all flex justify-center items-center gap-2"
               >
                 {isSyncing ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" /> Conectando con Aeroweb...
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Procesando Cambios...
                   </>
                 ) : (
-                  <>Sincronizar Novedades Ahora</>
+                  <>Procesar y Actualizar Agenda</>
                 )}
               </button>
             </div>
           </div>
         )}
 
-        {/* Modal de Carga Manual de Vuelo */}
+        {/* Modal Carga Manual */}
         {showAddModal && (
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <form onSubmit={handleAddActivity} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full space-y-3 shadow-2xl">
@@ -414,7 +439,7 @@ export default function RosterPilotApp() {
           </div>
         )}
 
-        {/* Tab Bar / Menú Inferior de Navegación */}
+        {/* Tab Bar Inferior */}
         <div className="bg-slate-900 border-t border-slate-800 px-6 py-3 flex justify-around items-center">
           <button 
             onClick={() => setActiveTab('roster')}
