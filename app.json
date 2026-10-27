@@ -1,16 +1,41 @@
 {
   "expo": {
-    "name": "Roster Piloto",
-    "slug": "Roster-piloto",
+    "name": "Planes",
+    "slug": "planes-aerolineas",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#00539f"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rosterpiloto.app"
+      "bundleIdentifier": "com.damiancroci.planes",
+      "infoPlist": {
+        "NSCalendarsUsageDescription": "Planes necesita acceso al calendario para sincronizar automáticamente tus vuelos, OFF y días libres."
+      }
     },
     "android": {
-      "package": "com.rosterpiloto.app"
-    }
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#00539f"
+      },
+      "package": "com.damiancroci.planes",
+      "permissions": [
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Planes requiere permisos de calendario para volcar tus asignaciones de servicio."
+        }
+      ]
+    ]
   }
 }
