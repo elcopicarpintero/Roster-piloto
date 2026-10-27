@@ -27,7 +27,7 @@ const INITIAL_ROSTER = [
       { rol: 'Comandante (CP)', nombre: 'Pérez, Gustavo' },
       { rol: 'Primer Oficial (FO)', nombre: 'Croci Staziuk, Damián L.' },
       { rol: 'Comisario (CM)', nombre: 'Fernández, Lucía' },
-      { rol: 'Auxiliar de A bordo (AX)', nombre: 'Gómez, Martín' }
+      { rol: 'Auxiliar (AX)', nombre: 'Gómez, Martín' }
     ],
     ultimoAterrizaje: '17:30',
     demoraOperativa: '20:06',
@@ -47,56 +47,4 @@ const INITIAL_ROSTER = [
     tv: '04:00', 
     tsv: '06:10', 
     equipo: '738 (Boeing 737-800)', 
-    activada: true,
-    tramos: [
-      { id: 't1', vuelo: 'AR1196', orig: 'AEP', dest: 'REL', de: '17:40', a: '19:45', dur: '2:05', sol: '2.1', noche: '0.0' },
-      { id: 't2', vuelo: 'AR1197', orig: 'REL', dest: 'AEP', de: '20:25', a: '22:20', dur: '1:55', sol: '0.1', noche: '1.8' }
-    ],
-    tripulacion: [
-      { rol: 'Comandante (CP)', nombre: 'González, Roberto' },
-      { rol: 'Primer Oficial (FO)', nombre: 'Croci Staziuk, Damián L.' },
-      { rol: 'Comisario (CM)', nombre: 'Ríos, Mariana' }
-    ],
-    ultimoAterrizaje: '02:10 (+1)',
-    limitante: 'TSV'
-  },
-  { 
-    id: '3', 
-    fecha: 'Sábado 31', 
-    fullDate: '2026-10-31',
-    tipo: 'VUELO', 
-    vuelos: 'AR1894 / AR1879', 
-    ruta: 'AEP - FTE - USH - EZE', 
-    presentacion: '10:20', 
-    checkOut: '21:40', 
-    tv: '08:10', 
-    tsv: '11:20', 
-    equipo: '73M (Boeing 737 MAX 8)', 
-    activada: true,
-    tramos: [
-      { id: 't1', vuelo: 'AR1894', orig: 'AEP', dest: 'FTE', de: '11:20', a: '14:40', dur: '3:20', sol: '3.3', noche: '0.0' },
-      { id: 't2', vuelo: 'AR1894', orig: 'FTE', dest: 'USH', de: '15:30', a: '16:50', dur: '1:20', sol: '1.3', noche: '0.0' },
-      { id: 't3', vuelo: 'AR1879', orig: 'USH', dest: 'EZE', de: '17:40', a: '21:10', dur: '3:30', sol: '2.6', noche: '0.9' }
-    ],
-    tripulacion: [
-      { rol: 'Comandante (CP)', nombre: 'Sánchez, Marcelo' },
-      { rol: 'Primer Oficial (FO)', nombre: 'Croci Staziuk, Damián L.' },
-      { rol: 'Comisario (CM)', nombre: 'Benítez, Diego' }
-    ],
-    ultimoAterrizaje: '01:50 (+1)',
-    limitante: 'TSV'
-  }
-];
-
-export default function RosterPilotApp() {
-  const [activeTab, setActiveTab] = useState('roster');
-  const [roster] = useState(INITIAL_ROSTER);
-  const [selectedFlight, setSelectedFlight] = useState(null);
-  const [viaticoDiarioRate] = useState(87564);
-  const [showSyncModal, setShowSyncModal] = useState(false);
-  const [showHowCalculated, setShowHowCalculated] = useState(false);
-
-  const topesData = {
-    tvSemanal: { actual: '23:33', tope: '34:00', restante: '10:27 al 31/10', pct: 69 },
-    tsvSemanal: { actual: '36:41', tope: '65:00', restante: '28:19 al 31/10', pct: 56 },
-    tv
+    
