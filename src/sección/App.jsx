@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// Íconos SVG puros
+// Íconos SVG puros (sin dependencias externas)
 const PlaneIcon = () => (
   <svg className="w-4 h-4 text-sky-400 rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -383,7 +383,7 @@ export default function RosterPilotApp() {
         )}
 
         {/* Modal CWP Sync */}
-        showSyncModal && (
+        {showSyncModal && (
           <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full space-y-4 shadow-2xl">
               <div className="flex justify-between items-center">
