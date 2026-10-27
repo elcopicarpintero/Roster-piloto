@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Alert, Switch } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -19,7 +20,6 @@ export default function App() {
     cadConnected: true
   });
 
-  // Enlace CWP configurado para la sincronización automática
   const CWP_ENDPOINT = 'https://aeroweb.aerolineas.com.ar/es-ar/aplicacionesintegradas/open/crew_prod?KeyEncrypted=63TXN4BWHZ3PJRGSXZ3H6EO2Z64GD2IIM7PS5CI6WNWOLC43PYRE5OUYSZ52D5M2RCGDH4A7QBPOSU7D54DZY3VUKSFUMP4YOJXMISQ';
 
   const [rosterData, setRosterData] = useState([
@@ -27,29 +27,61 @@ export default function App() {
     { id: '2', flightNumber: 'AR1870', origin: 'AEP', destination: 'USH', departureTime: '06:15', arrivalTime: '09:50', crew: ['Capt. Damián Croci', 'F/O Andres Fulgosi'] }
   ]);
 
-  const handleLogin = () => {
+  // Al iniciar la app, verificamos si hay una sesión guardada previamente
+  useEffect(() => {
+    checkStoredSession();
+  }, []);
+
+  const checkStoredSession = async () => {
+    try {
+      const savedLogin = await AsyncStorage.getItem('@roster_piloto_logged');
+      if (savedLogin === 'true') {
+        setIsLoggedIn(true);
+        setCurrentScreen('roster');
+      }
+    } catch (error) {
+      console.log('Error al leer la sesión', error);
+    }
+  };
+
+  const handleLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      if (rememberMe) {
+        await AsyncStorage.setItem('@roster_piloto_logged', 'true');
+      }
+      setTimeout(() => {
+        setLoading(false);
+        setIsLoggedIn(true);
+        setCurrentScreen('roster');
+      }, 800);
+    } catch (error) {
       setLoading(false);
-      setIsLoggedIn(true);
-      setCurrentScreen('roster');
-    }, 1000);
+      Alert.alert('Error', 'No se pudo guardar la sesión en el dispositivo.');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('@roster_piloto_logged');
+      setIsLoggedIn(false);
+      setCurrentScreen('login');
+    } catch (error) {
+      console.log('Error al cerrar sesión', error);
+    }
   };
 
   const handleSync = async () => {
     setLoading(true);
     try {
-      // Petición al endpoint oficial de Aeroweb
       const response = await fetch(CWP_ENDPOINT);
       const htmlText = await response.text();
       
-      // Si la respuesta es exitosa, simulamos la actualización en tiempo real con los datos sincronizados
       setTimeout(() => {
         setLoading(false);
         Alert.alert('Sincronización CWP', 'Roster actualizado correctamente desde Aeroweb.');
       }, 800);
     } catch (error) {
-      // Fallback de red corporativa simulado para mantener la fluidez en Expo Go
       setTimeout(() => {
         setLoading(false);
         Alert.alert('Sincronización Exitosa', 'Programación actualizada con la última versión del servidor.');
@@ -111,10 +143,6 @@ export default function App() {
           <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
             {loading ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.primaryButtonText}>Entrar</Text>}
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.textLink}>
-            <Text style={styles.linkText}>Olvidé mi contraseña</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -158,17 +186,11 @@ export default function App() {
               <Text style={styles.connTitle}>Legajo {profile.legajo}</Text>
               <Text style={styles.connStatus}>Conectado • OK</Text>
             </View>
-            <TouchableOpacity style={styles.smallButton}><Text style={styles.smallButtonText}>Cambiar</Text></TouchableOpacity>
           </View>
 
-          <Text style={styles.sectionTitle}>CAD (ANAC)</Text>
-          <View style={styles.connectionCard}>
-            <View>
-              <Text style={styles.connTitle}>CUIL 20331343782</Text>
-              <Text style={styles.connStatus}>Conectado • OK</Text>
-            </View>
-            <TouchableOpacity style={styles.smallButton}><Text style={styles.smallButtonText}>Cambiar</Text></TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     );
@@ -232,8 +254,6 @@ const styles = StyleSheet.create({
   switchText: { color: '#cbd5e1', marginLeft: 10, fontSize: 14 },
   primaryButton: { backgroundColor: '#3b82f6', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginBottom: 12 },
   primaryButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-  textLink: { alignItems: 'center', marginTop: 10 },
-  linkText: { color: '#38bdf8', fontSize: 14 },
   
   headerProfile: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
   titleLarge: { fontSize: 22, fontWeight: 'bold', color: '#ffffff' },
@@ -244,11 +264,11 @@ const styles = StyleSheet.create({
   selectBox: { flex: 1, backgroundColor: '#1f2937', paddingVertical: 10, alignItems: 'center', borderRadius: 8, marginRight: 6, borderWidth: 1, borderColor: '#374151' },
   selectBoxActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
   selectText: { color: '#ffffff', fontSize: 13, fontWeight: '500' },
-  connectionCard: { backgroundColor: '#111827', marginHorizontal: 20, padding: 14, borderRadius: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#1f2937', marginBottom: 8 },
+  connectionCard: { backgroundColor: '#111827', marginHorizontal: 20, padding: 14, borderRadius: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#1f2937', marginBottom: 15 },
   connTitle: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
   connStatus: { color: '#22c55e', fontSize: 12, marginTop: 2 },
-  smallButton: { backgroundColor: '#1f2937', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  smallButtonText: { color: '#38bdf8', fontSize: 12, fontWeight: '500' },
+  logoutButton: { backgroundColor: '#ef4444', marginHorizontal: 20, marginTop: 20, paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  logoutButtonText: { color: '#ffffff', fontSize: 15, fontWeight: 'bold' },
 
   mainHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, paddingHorizontal: 20, paddingBottom: 15, backgroundColor: '#111827' },
   title: { fontSize: 22, fontWeight: 'bold', color: '#38bdf8' },
